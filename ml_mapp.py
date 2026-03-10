@@ -162,7 +162,6 @@ with tab_ml:
         ml_submit = st.form_submit_button("Toggle Students")
         
         if ml_submit and ml_input.strip():
-            # Smart logic: converts "5" to "005" automatically so you can type fast
             entries = [s.strip().zfill(3) for s in ml_input.split(",") if s.strip()]
             for suffix in entries:
                 if suffix in st.session_state.db["ML"][selected_ml_date]:
@@ -179,16 +178,21 @@ with tab_ml:
         ml_data.append({"Identifier": usn, "Present": is_present})
         
     df_ml = pd.DataFrame(ml_data)
-    st.write("*(Tap the checkbox to toggle status)*")
+    st.write("*(Tap checkboxes as fast as you want, then click Save!)*")
     
-    # FIXED HEIGHT CONTAINER: Prevents the page from jumping when checkboxes are clicked
-    with st.container(height=500):
-        edited_df_ml = st.data_editor(df_ml, hide_index=True, use_container_width=True, key=f"editor_ml_{selected_ml_date}")
-    
-    new_absentees_ml = [row["Identifier"] for _, row in edited_df_ml.iterrows() if not row["Present"]]
-    if new_absentees_ml != current_ml_absentees:
-        st.session_state.db["ML"][selected_ml_date] = new_absentees_ml
-        save_db(st.session_state.db)
+    # FIXED HEIGHT CONTAINER INSIDE A FORM: Prevents the page from jumping
+    with st.form(key=f"editor_form_ml_{selected_ml_date}"):
+        with st.container(height=500):
+            edited_df_ml = st.data_editor(df_ml, hide_index=True, use_container_width=True)
+            
+        save_ml = st.form_submit_button("💾 Save Attendance")
+        
+        if save_ml:
+            new_absentees_ml = [row["Identifier"] for _, row in edited_df_ml.iterrows() if not row["Present"]]
+            if new_absentees_ml != current_ml_absentees:
+                st.session_state.db["ML"][selected_ml_date] = new_absentees_ml
+                save_db(st.session_state.db)
+            st.success("✅ Saved! You can now Download or Copy.")
 
     st.divider()
     st.markdown("### Export Options")
@@ -242,16 +246,21 @@ with tab_rm:
         rm_data.append({"Identifier": name, "Present": name in current_rm_presentees})
         
     df_rm = pd.DataFrame(rm_data)
-    st.write("*(Tap the checkbox to toggle status)*")
+    st.write("*(Tap checkboxes as fast as you want, then click Save!)*")
     
-    # FIXED HEIGHT CONTAINER: Prevents the page from jumping when checkboxes are clicked
-    with st.container(height=500):
-        edited_df_rm = st.data_editor(df_rm, hide_index=True, use_container_width=True, key=f"editor_rm_{selected_rm_date}")
-    
-    new_presentees_rm = [row["Identifier"] for _, row in edited_df_rm.iterrows() if row["Present"]]
-    if new_presentees_rm != current_rm_presentees:
-        st.session_state.db["RM"][selected_rm_date] = new_presentees_rm
-        save_db(st.session_state.db)
+    # FIXED HEIGHT CONTAINER INSIDE A FORM: Prevents the page from jumping
+    with st.form(key=f"editor_form_rm_{selected_rm_date}"):
+        with st.container(height=500):
+            edited_df_rm = st.data_editor(df_rm, hide_index=True, use_container_width=True)
+            
+        save_rm = st.form_submit_button("💾 Save Attendance")
+        
+        if save_rm:
+            new_presentees_rm = [row["Identifier"] for _, row in edited_df_rm.iterrows() if row["Present"]]
+            if new_presentees_rm != current_rm_presentees:
+                st.session_state.db["RM"][selected_rm_date] = new_presentees_rm
+                save_db(st.session_state.db)
+            st.success("✅ Saved! You can now Download or Copy.")
 
     st.divider()
     st.markdown("### Export Options")
