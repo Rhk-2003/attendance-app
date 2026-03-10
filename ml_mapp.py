@@ -17,86 +17,29 @@ if not st.session_state.logged_in:
     st.title("🔒 Secure Access")
     st.write("Please log in to access the Attendance Tracker.")
     
-    # We use a form so hitting Enter submits the password
     with st.form("login_form"):
         pwd = st.text_input("Password", type="password")
         submit = st.form_submit_button("Login")
         
         if submit:
-            # Checks your Streamlit Secrets. Defaults to 'killer123' if not set.
             if pwd == st.secrets.get("APP_PASSWORD", "killer123"):
                 st.session_state.logged_in = True
                 st.rerun()
             else:
                 st.error("❌ Incorrect Password")
-    st.stop() # Stops the rest of the app from loading until logged in
+    st.stop() 
 
 
 # --- ATTENDANCE DATA ---
 ML_STUDENTS = [
-
-
-
-    "001", "002", "003", "004", "005",
-
-
-
-    "006", "007", "008", "009", "010",
-
-
-
-    "011", "012", "013", "014", "015",
-
-
-
-    "016", "017", "018", "019", "020",
-
-
-
-    "021", "022", "023", "024", "025",
-
-
-
-    "026", "027", "028", "029", "030",
-
-
-
-    "031", "032", "033", "034", "035",
-
-
-
-    "036", "037", "038", "039", "040",
-
-
-
-    "041", "042", "161", "167", "168",
-
-
-
-    "169", "170", "171", "172", "173",
-
-
-
-    "178", "179", "180", "181", "182",
-
-
-
-    "197", "198", "199", "200", "201",
-
-
-
-    "207", "208", "209", "210", "211",
-
-
-
-    "218", "220", "223", "233", "298",
-
-
-
+    "001", "002", "003", "004", "005", "006", "007", "008", "009", "010",
+    "011", "012", "013", "014", "015", "016", "017", "018", "019", "020",
+    "021", "022", "023", "024", "025", "026", "027", "028", "029", "030",
+    "031", "032", "033", "034", "035", "036", "037", "038", "039", "040",
+    "041", "042", "161", "167", "168", "169", "170", "171", "172", "173",
+    "178", "179", "180", "181", "182", "197", "198", "199", "200", "201",
+    "207", "208", "209", "210", "211", "218", "220", "223", "233", "298",
     "300", "301"
-
-
-
 ]
 
 RM_STUDENTS = [
@@ -197,7 +140,10 @@ def get_copy_html(df, date_str, export_type="status"):
 
 # --- UI: MAIN APP ---
 st.title("📱 Fast Attendance Marker")
-st.button("Log Out", on_click=lambda: st.session_state.update(logged_in=False))
+
+col_title, col_logout = st.columns([3, 1])
+with col_logout:
+    st.button("Log Out", on_click=lambda: st.session_state.update(logged_in=False), use_container_width=True)
 
 tab_ml, tab_rm = st.tabs(["Machine Learning", "Research Methodology"])
 
@@ -211,13 +157,13 @@ with tab_ml:
     ml_dates.sort(key=lambda date: datetime.strptime(date, "%d-%m-%Y"), reverse=True)
     selected_ml_date = st.selectbox("Select Date to Edit", ml_dates, key="ml_date")
     
-    # Using a Form here stops the page from jumping while you are typing
     with st.form(key=f"ml_form_{selected_ml_date}", clear_on_submit=True):
-        ml_input = st.text_input("Rapid Entry: Type USN digits & press Enter")
+        ml_input = st.text_input("Rapid Entry: Type 1-3 digits & press Enter (e.g. 5, 12, 161)")
         ml_submit = st.form_submit_button("Toggle Students")
         
         if ml_submit and ml_input.strip():
-            entries = [s.strip() for s in ml_input.split(",") if s.strip()]
+            # Smart logic: converts "5" to "005" automatically so you can type fast
+            entries = [s.strip().zfill(3) for s in ml_input.split(",") if s.strip()]
             for suffix in entries:
                 if suffix in st.session_state.db["ML"][selected_ml_date]:
                     st.session_state.db["ML"][selected_ml_date].remove(suffix)
@@ -229,16 +175,17 @@ with tab_ml:
     ml_data = []
     current_ml_absentees = st.session_state.db["ML"][selected_ml_date]
     for usn in ML_STUDENTS:
-        is_present = not any(usn.endswith(abs_suffix) for abs_suffix in current_ml_absentees)
+        is_present = usn not in current_ml_absentees
         ml_data.append({"Identifier": usn, "Present": is_present})
         
     df_ml = pd.DataFrame(ml_data)
     st.write("*(Tap the checkbox to toggle status)*")
     
-    edited_df_ml = st.data_editor(df_ml, hide_index=True, use_container_width=True, key=f"editor_ml_{selected_ml_date}")
+    # FIXED HEIGHT CONTAINER: Prevents the page from jumping when checkboxes are clicked
+    with st.container(height=500):
+        edited_df_ml = st.data_editor(df_ml, hide_index=True, use_container_width=True, key=f"editor_ml_{selected_ml_date}")
     
-    # Process checkbox edits and save locally
-    new_absentees_ml = [row["Identifier"][-3:] for _, row in edited_df_ml.iterrows() if not row["Present"]]
+    new_absentees_ml = [row["Identifier"] for _, row in edited_df_ml.iterrows() if not row["Present"]]
     if new_absentees_ml != current_ml_absentees:
         st.session_state.db["ML"][selected_ml_date] = new_absentees_ml
         save_db(st.session_state.db)
@@ -297,7 +244,9 @@ with tab_rm:
     df_rm = pd.DataFrame(rm_data)
     st.write("*(Tap the checkbox to toggle status)*")
     
-    edited_df_rm = st.data_editor(df_rm, hide_index=True, use_container_width=True, key=f"editor_rm_{selected_rm_date}")
+    # FIXED HEIGHT CONTAINER: Prevents the page from jumping when checkboxes are clicked
+    with st.container(height=500):
+        edited_df_rm = st.data_editor(df_rm, hide_index=True, use_container_width=True, key=f"editor_rm_{selected_rm_date}")
     
     new_presentees_rm = [row["Identifier"] for _, row in edited_df_rm.iterrows() if row["Present"]]
     if new_presentees_rm != current_rm_presentees:
@@ -305,7 +254,7 @@ with tab_rm:
         save_db(st.session_state.db)
 
     st.divider()
-    st.markdown("### Export Options (Names Only)")
+    st.markdown("### Export Options")
     col_dl_names, col_cp_names = st.columns(2)
     with col_dl_names:
         excel_names_rm = generate_excel(edited_df_rm, selected_rm_date, "names")
@@ -319,7 +268,6 @@ with tab_rm:
     with col_cp_names:
          components.html(get_copy_html(edited_df_rm, selected_rm_date, "names"), height=45)
 
-    st.markdown("### Export Options (A/P Column)")
     col_dl_status, col_cp_status = st.columns(2)
     with col_dl_status:
         excel_status_rm = generate_excel(edited_df_rm, selected_rm_date, "status")
