@@ -32,78 +32,31 @@ if not st.session_state.logged_in:
 
 # --- ATTENDANCE DATA ---
 ML_STUDENTS = [
-"001-AARON CHACKO JACOB",
-"002-ABHISHEK M NAIR",
-"003-ADITHYA KRISHNAN T N",
-"004-ARJUN KRESHNAN C M",
-"005-ASHER JACOB DANI",
-"006-BHARGAV K N",
-"007-GOWTHAM M S",
-"008-HANI MUHAMMED NOUSHAD",
-"009-HARIKIRAN S",
-"010-ISHA K S",
-"011-JAYA NIDHI",
-"012-KARAKAMUKKALA ASHRAF",
-"013-NIKITH M",
-"014-NISHIMAY MINAR PARODKAR",
-"015-RESHIKA M",
-"016-RITHISH NATARAJAN E",
-"017-RUPESH SINGH",
-"018-SANGAVI M",
-"019-SHUMAQUE SHARIQUE UKAYE",
-"020-YENUMULA VINUTHNA SRI",
-"021-ZIRGOM HAIDAR AMAN",
-"022-AADITYA A NAIR",
-"023-AMAN KUMAWAT",
-"024-ANUSHREE S JAMBAGI",
-"025-ARJUN P",
-"026-ARSHAD ALOM",
-"027-ASHISH U K",
-"028-DEBADRITA SAHA",
-"029-DEEPAK B M",
-"030-EZHILARASAN M",
-"031-GRACY SWEETY T",
-"032-HIMNISH KUMAR R",
-"033-KISHAN R SHETTY",
-"034-LAKSHAY SHARMA",
-"035-MALLIKAARJUN S",
-"036-PRAPTI VINAY REVANKAR",
-"037-RAGHAV KEJRIWAL",
-"038-RAKSHITHA V",
-"039-SATWARA RUSHIL KEYUR",
-"040-SYED AYAAN AHMED",
-"041-VRUNDA S",
-"042-YASHAS R",
-"161-PRATEEKSHA",
-"167-A K KARTHICK RAJA",
-"168-CHINMAYEE K RAJ",
-"169-CHIRANTH POONACHA P G",
-"170-JAYA PRAKASH K",
-"171-PAVANA V",
-"172-RAJ BAHADUR",
-"173-VINOD MOHAN",
-"178-AMINA MUNNA",
-"179-ANOON M R",
-"180-N R VETRIVEL",
-"181-PALLAVI VISHAL CHOUGULE",
-"182-VADHIYA NEEL JITENDRABHAI",
-"197-VINVALAN N",
-"198-I ROGAN RAJA",
-"199-ASSUDANI SIDDHI SATYANKUMR",
-"200-NAVYASHREE H",
-"201-DHANYA VARSHA V",
-"207-DARSHAN MURTHY K",
-"208-HARSH TIWARI",
-"209-LIKITH H N",
-"210-TOUFEEQ AHAMED QADRI",
-"211-PRIYANSU SAHOO",
-"218-SIMRAN CHAUDHARY",
-"220-VANSH RAJ PARASHAR",
-"223-PANKAJ SINGH",
-"233-BADANAEGOUGNON ABDOUGAFAR",
-"298-ZAKARIA MAHAMAT HAKI",
-"300-ABDUL KAIZ",
-"301-SHRIYA G KARNEES"
+    "001-AARON CHACKO JACOB", "002-ABHISHEK M NAIR", "003-ADITHYA KRISHNAN T N",
+    "004-ARJUN KRESHNAN C M", "005-ASHER JACOB DANI", "006-BHARGAV K N",
+    "007-GOWTHAM M S", "008-HANI MUHAMMED NOUSHAD", "009-HARIKIRAN S",
+    "010-ISHA K S", "011-JAYA NIDHI", "012-KARAKAMUKKALA ASHRAF",
+    "013-NIKITH M", "014-NISHIMAY MINAR PARODKAR", "015-RESHIKA M",
+    "016-RITHISH NATARAJAN E", "017-RUPESH SINGH", "018-SANGAVI M",
+    "019-SHUMAQUE SHARIQUE UKAYE", "020-YENUMULA VINUTHNA SRI",
+    "021-ZIRGOM HAIDAR AMAN", "022-AADITYA A NAIR", "023-AMAN KUMAWAT",
+    "024-ANUSHREE S JAMBAGI", "025-ARJUN P", "026-ARSHAD ALOM",
+    "027-ASHISH U K", "028-DEBADRITA SAHA", "029-DEEPAK B M",
+    "030-EZHILARASAN M", "031-GRACY SWEETY T", "032-HIMNISH KUMAR R",
+    "033-KISHAN R SHETTY", "034-LAKSHAY SHARMA", "035-MALLIKAARJUN S",
+    "036-PRAPTI VINAY REVANKAR", "037-RAGHAV KEJRIWAL", "038-RAKSHITHA V",
+    "039-SATWARA RUSHIL KEYUR", "040-SYED AYAAN AHMED", "041-VRUNDA S",
+    "042-YASHAS R", "161-PRATEEKSHA", "167-A K KARTHICK RAJA",
+    "168-CHINMAYEE K RAJ", "169-CHIRANTH POONACHA P G", "170-JAYA PRAKASH K",
+    "171-PAVANA V", "172-RAJ BAHADUR", "173-VINOD MOHAN",
+    "178-AMINA MUNNA", "179-ANOON M R", "180-N R VETRIVEL",
+    "181-PALLAVI VISHAL CHOUGULE", "182-VADHIYA NEEL JITENDRABHAI",
+    "197-VINVALAN N", "198-I ROGAN RAJA", "199-ASSUDANI SIDDHI SATYANKUMR",
+    "200-NAVYASHREE H", "201-DHANYA VARSHA V", "207-DARSHAN MURTHY K",
+    "208-HARSH TIWARI", "209-LIKITH H N", "210-TOUFEEQ AHAMED QADRI",
+    "211-PRIYANSU SAHOO", "218-SIMRAN CHAUDHARY", "220-VANSH RAJ PARASHAR",
+    "223-PANKAJ SINGH", "233-BADANAEGOUGNON ABDOUGAFAR",
+    "298-ZAKARIA MAHAMAT HAKI", "300-ABDUL KAIZ", "301-SHRIYA G KARNEES"
 ]
 
 RM_STUDENTS = [
@@ -235,28 +188,35 @@ with tab_ml:
             save_db(st.session_state.db)
             st.rerun()
 
-    ml_data = []
+    st.write("*(Tap a name or checkbox to toggle status, then click Save!)*")
     current_ml_absentees = st.session_state.db["ML"][selected_ml_date]
-    for usn in ML_STUDENTS:
-        is_present = usn not in current_ml_absentees
-        ml_data.append({"Identifier": usn, "Present": is_present})
-        
-    df_ml = pd.DataFrame(ml_data)
-    st.write("*(Tap checkboxes as fast as you want, then click Save!)*")
     
-    # FIXED HEIGHT CONTAINER INSIDE A FORM: Prevents the page from jumping
+    # --- UPGRADED UI: Checkboxes allow tapping the name directly ---
     with st.form(key=f"editor_form_ml_{selected_ml_date}"):
         with st.container(height=500):
-            edited_df_ml = st.data_editor(df_ml, hide_index=True, use_container_width=True)
-            
+            checkbox_states = {}
+            for student in ML_STUDENTS:
+                # Extract USN so Rapid Entry stays compatible
+                usn = student.split("-")[0] 
+                is_present = usn not in current_ml_absentees
+                
+                # Checkbox natively allows clicking the text label to toggle!
+                checkbox_states[usn] = st.checkbox(student, value=is_present)
+                
         save_ml = st.form_submit_button("💾 Save Attendance")
         
         if save_ml:
-            new_absentees_ml = [row["Identifier"] for _, row in edited_df_ml.iterrows() if not row["Present"]]
+            new_absentees_ml = [usn for usn, present in checkbox_states.items() if not present]
             if new_absentees_ml != current_ml_absentees:
                 st.session_state.db["ML"][selected_ml_date] = new_absentees_ml
                 save_db(st.session_state.db)
             st.success("✅ Saved! You can now Download or Copy.")
+            st.rerun()
+
+    # Rebuild Dataframe for Export based on latest DB status
+    updated_ml_absentees = st.session_state.db["ML"][selected_ml_date]
+    export_data_ml = [{"Identifier": student, "Present": student.split("-")[0] not in updated_ml_absentees} for student in ML_STUDENTS]
+    edited_df_ml = pd.DataFrame(export_data_ml)
 
     st.divider()
     st.markdown("### Export Options")
@@ -310,9 +270,9 @@ with tab_rm:
         rm_data.append({"Identifier": name, "Present": name in current_rm_presentees})
         
     df_rm = pd.DataFrame(rm_data)
-    st.write("*(Tap checkboxes as fast as you want, then click Save!)*")
+    st.write("*(Click precisely on the checkbox to toggle status, then click Save!)*")
     
-    # FIXED HEIGHT CONTAINER INSIDE A FORM: Prevents the page from jumping
+    # Keeping RM Tab as Data Editor table for now
     with st.form(key=f"editor_form_rm_{selected_rm_date}"):
         with st.container(height=500):
             edited_df_rm = st.data_editor(df_rm, hide_index=True, use_container_width=True)
