@@ -12,22 +12,39 @@ import gspread.utils
 st.set_page_config(page_title="Attendance Tracker", layout="centered")
 
 ML_STUDENTS = [
+
     "001", "002", "003", "004", "005",
+
     "006", "007", "008", "009", "010",
+
     "011", "012", "013", "014", "015",
+
     "016", "017", "018", "019", "020",
+
     "021", "022", "023", "024", "025",
+
     "026", "027", "028", "029", "030",
+
     "031", "032", "033", "034", "035",
+
     "036", "037", "038", "039", "040",
+
     "041", "042", "161", "167", "168",
+
     "169", "170", "171", "172", "173",
+
     "178", "179", "180", "181", "182",
+
     "197", "198", "199", "200", "201",
+
     "207", "208", "209", "210", "211",
+
     "218", "220", "223", "233", "298",
+
     "300", "301"
+
 ]
+
 RM_STUDENTS = [
     "HIMNISH KUMAR R", "ISHA K S", "JAHNAVI PALAMBAKAM", "JAYA NIDHI",
     "JAYA PRAKASH K", "KARTHICK RAJA", "KISHAN R SHETTY", "LAKSHAY SHARMA",
@@ -61,6 +78,7 @@ def load_db():
     return {"ML": {}, "RM": {}}
 
 def save_db(db_data):
+    """Only called when PUSH button is clicked to prevent Google 503 API limits."""
     for cls in ["ML", "RM"]:
         dates = list(db_data[cls].keys())
         if len(dates) > 3:
@@ -80,7 +98,6 @@ if "db" not in st.session_state:
     db = load_db()
     if TODAY not in db["ML"]: db["ML"][TODAY] = []
     if TODAY not in db["RM"]: db["RM"][TODAY] = []
-    save_db(db)
     st.session_state.db = db
 
 # --- SMART PUSH TO SPREADSHEETS ---
@@ -230,7 +247,6 @@ with tab_ml:
                     st.session_state.db["ML"][selected_ml_date].remove(suffix)
                 else:
                     st.session_state.db["ML"][selected_ml_date].append(suffix)
-            save_db(st.session_state.db)
         st.session_state.ml_input = "" 
 
     st.text_input("Rapid Entry: Type USN digits & press Enter", key="ml_input", on_change=process_ml_input)
@@ -243,22 +259,24 @@ with tab_ml:
         
     df_ml = pd.DataFrame(ml_data)
     st.write("*(Tap the checkbox to toggle status)*")
-    edited_df_ml = st.data_editor(df_ml, hide_index=True, use_container_width=True)
     
+    # Stable key prevents complete redraws
+    edited_df_ml = st.data_editor(df_ml, hide_index=True, use_container_width=True, key=f"editor_ml_{selected_ml_date}")
+    
+    # Update state silently
     new_absentees_ml = [row["Identifier"][-3:] for _, row in edited_df_ml.iterrows() if not row["Present"]]
     if new_absentees_ml != current_ml_absentees:
         st.session_state.db["ML"][selected_ml_date] = new_absentees_ml
-        save_db(st.session_state.db)
-        st.rerun()
 
     st.divider()
     st.markdown("### 🔒 Secure Push to Master Sheet")
     ml_password = st.text_input("Enter Authorization Password", type="password", key="ml_pass_input")
     
     if st.button(f"🚀 Push {selected_ml_date} to ML Master Sheet", use_container_width=True, type="primary"):
-        # Checks against your Streamlit Secrets. Defaults to killer123 if you forget to set it.
         if ml_password == st.secrets.get("APP_PASSWORD", "killer123"):
             with st.spinner("Syncing to Google Sheets..."):
+                # Save background memory to Google Sheets ONLY when button is pushed
+                save_db(st.session_state.db) 
                 success, overwritten = push_attendance_to_sheet("ML", selected_ml_date, edited_df_ml)
                 if success:
                     if overwritten:
@@ -307,7 +325,6 @@ with tab_rm:
                     st.session_state.db["RM"][selected_rm_date].remove(matched_name)
                 else:
                     st.session_state.db["RM"][selected_rm_date].append(matched_name)
-            save_db(st.session_state.db)
         st.session_state.rm_input = ""
 
     st.text_input("Rapid Entry: Type Name & press Enter", key="rm_input", on_change=process_rm_input)
@@ -319,13 +336,14 @@ with tab_rm:
         
     df_rm = pd.DataFrame(rm_data)
     st.write("*(Tap the checkbox to toggle status)*")
-    edited_df_rm = st.data_editor(df_rm, hide_index=True, use_container_width=True)
     
+    # Stable key prevents complete redraws
+    edited_df_rm = st.data_editor(df_rm, hide_index=True, use_container_width=True, key=f"editor_rm_{selected_rm_date}")
+    
+    # Update state silently
     new_presentees_rm = [row["Identifier"] for _, row in edited_df_rm.iterrows() if row["Present"]]
     if new_presentees_rm != current_rm_presentees:
         st.session_state.db["RM"][selected_rm_date] = new_presentees_rm
-        save_db(st.session_state.db)
-        st.rerun()
 
     st.divider()
     st.markdown("### 🔒 Secure Push to Master Sheet")
@@ -334,6 +352,8 @@ with tab_rm:
     if st.button(f"🚀 Push {selected_rm_date} to RM Master Sheet", use_container_width=True, type="primary"):
         if rm_password == st.secrets.get("APP_PASSWORD", "killer123"):
             with st.spinner("Syncing to Google Sheets..."):
+                # Save background memory to Google Sheets ONLY when button is pushed
+                save_db(st.session_state.db)
                 success, overwritten = push_attendance_to_sheet("RM", selected_rm_date, edited_df_rm)
                 if success:
                     if overwritten:
