@@ -188,19 +188,22 @@ with tab_ml:
             save_db(st.session_state.db)
             st.rerun()
 
+    # Reset Button for ML
+    if st.button("🔄 Reset All to Present", key=f"reset_ml_{selected_ml_date}"):
+        st.session_state.db["ML"][selected_ml_date] = []
+        save_db(st.session_state.db)
+        st.rerun()
+
     st.write("*(Tap a name or checkbox to toggle status, then click Save!)*")
     current_ml_absentees = st.session_state.db["ML"][selected_ml_date]
     
-    # --- UPGRADED UI: Checkboxes allow tapping the name directly ---
+    # Checkbox form
     with st.form(key=f"editor_form_ml_{selected_ml_date}"):
         with st.container(height=500):
             checkbox_states = {}
             for student in ML_STUDENTS:
-                # Extract USN so Rapid Entry stays compatible
                 usn = student.split("-")[0] 
                 is_present = usn not in current_ml_absentees
-                
-                # Checkbox natively allows clicking the text label to toggle!
                 checkbox_states[usn] = st.checkbox(student, value=is_present)
                 
         save_ml = st.form_submit_button("💾 Save Attendance")
@@ -264,27 +267,37 @@ with tab_rm:
             save_db(st.session_state.db)
             st.rerun()
     
-    rm_data = []
+    # Reset Button for RM
+    if st.button("🔄 Reset All to Absent", key=f"reset_rm_{selected_rm_date}"):
+        st.session_state.db["RM"][selected_rm_date] = []
+        save_db(st.session_state.db)
+        st.rerun()
+
+    st.write("*(Tap a name or checkbox to toggle status, then click Save!)*")
     current_rm_presentees = st.session_state.db["RM"][selected_rm_date]
-    for name in RM_STUDENTS:
-        rm_data.append({"Identifier": name, "Present": name in current_rm_presentees})
-        
-    df_rm = pd.DataFrame(rm_data)
-    st.write("*(Click precisely on the checkbox to toggle status, then click Save!)*")
     
-    # Keeping RM Tab as Data Editor table for now
+    # Checkbox form for RM
     with st.form(key=f"editor_form_rm_{selected_rm_date}"):
         with st.container(height=500):
-            edited_df_rm = st.data_editor(df_rm, hide_index=True, use_container_width=True)
-            
+            rm_checkbox_states = {}
+            for name in RM_STUDENTS:
+                is_present = name in current_rm_presentees
+                rm_checkbox_states[name] = st.checkbox(name, value=is_present)
+                
         save_rm = st.form_submit_button("💾 Save Attendance")
         
         if save_rm:
-            new_presentees_rm = [row["Identifier"] for _, row in edited_df_rm.iterrows() if row["Present"]]
+            new_presentees_rm = [name for name, present in rm_checkbox_states.items() if present]
             if new_presentees_rm != current_rm_presentees:
                 st.session_state.db["RM"][selected_rm_date] = new_presentees_rm
                 save_db(st.session_state.db)
             st.success("✅ Saved! You can now Download or Copy.")
+            st.rerun()
+
+    # Rebuild Dataframe for Export based on latest DB status
+    updated_rm_presentees = st.session_state.db["RM"][selected_rm_date]
+    export_data_rm = [{"Identifier": name, "Present": name in updated_rm_presentees} for name in RM_STUDENTS]
+    edited_df_rm = pd.DataFrame(export_data_rm)
 
     st.divider()
     st.markdown("### Export Options")
